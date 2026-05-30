@@ -51,6 +51,11 @@ now=$(date +%s)
     # scheduled end; the recorder actually stops once there's been SILENCE seconds of no
     # speech (meeting wound down), whichever comes first.
     cap=$((remain + OVERRUN))
+    if [ "${MEETILY_DRY_RUN:-0}" = "1" ]; then
+      echo "DRY-RUN would record '$title': --max-seconds $cap --stop-after-silence $SILENCE --out $out"
+      echo "$(date -Iseconds) DRY-RUN '$title' (sched ${remain}s, cap ${cap}s) → $out" >>"$STATE_DIR/poller.log"
+      continue
+    fi
     "$REC_BIN" record --name "$title" --max-seconds "$cap" --stop-after-silence "$SILENCE" --out "$out" \
       >"$STATE_DIR/rec_${key}.log" 2>&1 &
     echo $! >"$lock"
