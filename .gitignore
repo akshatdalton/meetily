@@ -78,3 +78,6 @@ target/
 
 frontend/src-tauri/binaries/
 Cargo.lock
+
+# headless meetily-rec build output
+frontend/src-tauri/dist/

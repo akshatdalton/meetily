@@ -387,6 +387,10 @@ pub fn get_language_preference_internal() -> Option<String> {
     LANGUAGE_PREFERENCE.lock().ok().map(|lang| lang.clone())
 }
 
+// Gated out of the headless `meetily-rec` build (--features headless): this GUI entry
+// point pulls in the full Tauri command surface via generate_handler!, which the
+// recorder doesn't need. The default (GUI) build is unaffected.
+#[cfg(not(feature = "headless"))]
 pub fn run() {
     log::set_max_level(log::LevelFilter::Info);
 

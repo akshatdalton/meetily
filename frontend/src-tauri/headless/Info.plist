@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>meetily-rec</string>
+    <key>CFBundleDisplayName</key>
+    <string>Meetily Recorder</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.akshatdalton.meetily-rec</string>
+    <key>CFBundleExecutable</key>
+    <string>meetily-rec</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleVersion</key>
+    <string>0.1.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+
+    <!-- Windowless background agent: no Dock icon, no main window. -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- TCC usage strings (proven to obtain mic + system-audio in Meetily's GUI). -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>meetily-rec records meeting audio from your microphone.</string>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>meetily-rec needs screen recording permission to capture system audio during meetings.</string>
+    <key>NSAudioCaptureUsageDescription</key>
+    <string>meetily-rec captures system audio output for local meeting transcription.</string>
+</dict>
+</plist>

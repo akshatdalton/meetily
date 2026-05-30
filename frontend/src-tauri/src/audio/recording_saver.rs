@@ -458,6 +458,72 @@ impl RecordingSaver {
         Ok(Some(final_audio_path.to_string_lossy().to_string()))
     }
 
+    /// Headless variant of `stop_and_save` — finalizes audio.mp4 + transcripts.json +
+    /// metadata.json WITHOUT a Tauri `AppHandle`. Identical to `stop_and_save` except it
+    /// skips emitting the "recording-saved" event (the only Tauri-coupled line). Added for
+    /// the `meetily-rec` headless binary; the GUI path (`stop_and_save`) is untouched.
+    pub async fn stop_and_save_headless(
+        &mut self,
+        recording_duration: Option<f64>,
+    ) -> Result<Option<String>, String> {
+        info!("Stopping recording saver (headless)");
+
+        // Stop accumulation
+        if let Ok(mut is_saving) = self.is_saving.lock() {
+            *is_saving = false;
+        }
+
+        // Give time for final chunks to drain into the incremental saver
+        tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+
+        // No incremental saver => auto_save was disabled; transcripts/metadata already written
+        if self.incremental_saver.is_none() {
+            info!("No audio saver initialized (auto-save disabled) - skipping audio finalization");
+            return Ok(None);
+        }
+
+        // Finalize incremental saver (merge checkpoints into final audio.mp4)
+        let final_audio_path = if let Some(saver_arc) = &self.incremental_saver {
+            let mut saver = saver_arc.lock().await;
+            match saver.finalize().await {
+                Ok(path) => path,
+                Err(e) => return Err(format!("Failed to finalize audio: {}", e)),
+            }
+        } else {
+            return Err("No incremental saver initialized".to_string());
+        };
+
+        // Write final transcripts.json
+        if let Some(folder) = &self.meeting_folder {
+            if let Err(e) = self.write_transcripts_json(folder) {
+                return Err(format!("Failed to save transcripts: {}", e));
+            }
+        }
+
+        // Update metadata to completed status with the actual recording duration
+        if let (Some(folder), Some(mut metadata)) = (&self.meeting_folder, self.metadata.clone()) {
+            metadata.status = "completed".to_string();
+            metadata.completed_at = Some(chrono::Utc::now().to_rfc3339());
+            metadata.duration_seconds = recording_duration.or_else(|| {
+                if let Ok(segments) = self.transcript_segments.lock() {
+                    segments.last().map(|seg| seg.audio_end_time)
+                } else {
+                    None
+                }
+            });
+            if let Err(e) = self.write_metadata(folder, &metadata) {
+                return Err(format!("Failed to update metadata: {}", e));
+            }
+        }
+
+        // Clean up transcript segments
+        if let Ok(mut segments) = self.transcript_segments.lock() {
+            segments.clear();
+        }
+
+        Ok(Some(final_audio_path.to_string_lossy().to_string()))
+    }
+
     /// Get the meeting folder path (for passing to backend)
     pub fn get_meeting_folder(&self) -> Option<&PathBuf> {
         self.meeting_folder.as_ref()

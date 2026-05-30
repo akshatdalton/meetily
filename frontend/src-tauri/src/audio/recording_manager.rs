@@ -310,6 +310,17 @@ impl RecordingManager {
         Ok(())
     }
 
+    /// Headless finalize (no Tauri `AppHandle`): merges checkpoints into audio.mp4 and
+    /// writes transcripts.json + metadata.json. Pass `recording_duration` captured BEFORE
+    /// calling `stop_streams_and_force_flush` (state is cleared during flush). Used by the
+    /// `meetily-rec` binary. Returns the final audio.mp4 path if auto-save was enabled.
+    pub async fn save_recording_headless(&mut self, recording_duration: Option<f64>) -> Result<Option<String>> {
+        match self.recording_saver.stop_and_save_headless(recording_duration).await {
+            Ok(path) => Ok(path),
+            Err(e) => Err(anyhow::anyhow!(e)),
+        }
+    }
+
     /// Stop recording and save audio (legacy method)
     pub async fn stop_recording<R: tauri::Runtime>(&mut self, app: &tauri::AppHandle<R>) -> Result<()> {
         info!("Stopping recording manager");

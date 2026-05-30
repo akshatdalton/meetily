@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **⚙️ CUSTOM FORK — headless calendar-armed recorder (`meetily-rec`).** Branch
+> `custom/meetily-rec-2026-05-29` adds a headless, Google-Calendar-triggered meeting recorder that
+> reuses Meetily's audio + Whisper engines with no GUI (records mic+system audio around calendar
+> events → local transcript in the Obsidian vault). **Start here when continuing this work:**
+> [`frontend/src-tauri/headless/README.md`](frontend/src-tauri/headless/README.md) (master ref) and
+> [`frontend/src-tauri/headless/CHANGELOG.md`](frontend/src-tauri/headless/CHANGELOG.md). Build with
+> `frontend/src-tauri/headless/build.sh`. Full decision/learning history:
+> `~/opensource/vault/wiki/projects/meetily/initiatives/meetily-calendar-daemon/`.
+
 ## Project Overview
 
 **Meetily** is a privacy-first AI meeting assistant that captures, transcribes, and summarizes meetings entirely on local infrastructure. The project consists of two main components:
