@@ -91,6 +91,26 @@ The recorder does **not** stop at the scheduled end. `poller.sh` passes
 been **5 minutes of no speech** (VAD-driven — the meeting actually wound down), with a 2-hour hard
 cap as a safety net. Tune via `MEETILY_SILENCE` / `MEETILY_OVERRUN` (see `calendar/README.md`).
 
+## Ad-hoc recording (manual trigger)
+
+For a surprise huddle not on your calendar:
+```bash
+meet-now [name]     # start: records mic+system via the bundle → vault; auto-stops on silence
+meet-stop           # stop early (SIGINT → finalize + transcribe)
+```
+Installed to `~/.local/bin` by `calendar/install.sh` (source: `meet-now.sh` / `meet-stop.sh`).
+Launches via the `.app` bundle so it reuses the bundle's TCC grants (a bare shell run would attribute
+TCC to your terminal). Transcript lands in `~/opensource/vault/raw/meetings/<date>-<slug>/`, same as a
+calendar meeting.
+
+## Summaries via `/today`
+
+The `/today` skill surfaces every recorded transcript with no `summary.md` yet (a MEETINGS block +
+`[meet <slug>]` action). `/today meeting <slug|latest>` has Claude read the transcript, write
+`summary.md` (TL;DR · key points · action items · decisions), and optionally route action items into
+tickets + decisions into `learnings.md` via the existing ingest pipeline. This is the
+"Claude listens to my meetings" loop: recorder captures locally → `/today` turns it into action.
+
 ## File map
 
 ```

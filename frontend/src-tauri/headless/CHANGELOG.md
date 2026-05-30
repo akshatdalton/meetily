@@ -20,6 +20,17 @@ feature-gated so the upstream GUI build stays intact and upstream pulls remain c
 - **Packaging** (`headless/package.sh`): assembles a windowless, ad-hoc-signed `meetily-rec.app`
   with mic/screen-recording usage strings + a bundled, PATH-independent ffmpeg.
 - **`headless/build.sh`**: reproducible build (recreates gitignored stubs → cargo → package).
+- **Manual ad-hoc trigger** (`headless/meet-now.sh` / `meet-stop.sh`, installed to `~/.local/bin`):
+  `meet-now [name]` records a surprise huddle via the bundle (reuses TCC grants), auto-stops on
+  silence; `meet-stop` stops early. `install.sh` installs both.
+- **`MEETILY_DRY_RUN`** mode in `poller.sh` (validate arming without recording / debugging).
+- **`/today` integration** (in the personal `today` skill, not this repo): surfaces recorded
+  transcripts (transcript without `summary.md` = pending) + `/today meeting <slug|latest>` to
+  summarize on demand and route action items → tickets / decisions → learnings.
+
+### Shipped
+- Installed live (launchd agent loaded, gws-work source, mic+screen TCC granted). First real auto-
+  record: Mon 2026-06-01 "TM India Retro". Old `/Applications/Meetily.app` removed (→ Trash).
 
 ### Changed (additive, upstream untouched)
 - `src/audio/recording_saver.rs`: + `stop_and_save_headless()` (finalize without an `AppHandle`).

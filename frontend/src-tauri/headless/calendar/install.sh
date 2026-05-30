@@ -73,7 +73,14 @@ sed -e "s#__POLLER__#$SHARE/poller.sh#g" -e "s#__STATE__#$STATE#g" \
 launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
 
+# 3) Install the manual ad-hoc commands (meet-now / meet-stop) to ~/.local/bin (on PATH).
+mkdir -p "$HOME/.local/bin"
+cp "$HERE/../meet-now.sh"  "$HOME/.local/bin/meet-now"
+cp "$HERE/../meet-stop.sh" "$HOME/.local/bin/meet-stop"
+chmod +x "$HOME/.local/bin/meet-now" "$HOME/.local/bin/meet-stop"
+
 echo "✓ installed $LABEL (polls every 60s; source=$SOURCE)"
+echo "  manual: meet-now [name] / meet-stop   (ad-hoc huddles → vault → /today meeting latest)"
 echo "  poller: $SHARE/poller.sh    logs: $STATE/poller.log"
 echo
 echo "ONE-TIME: grant Microphone + Screen Recording to meetily-rec.app (so launchd can"
