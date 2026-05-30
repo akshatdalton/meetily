@@ -20,9 +20,13 @@ feature-gated so the upstream GUI build stays intact and upstream pulls remain c
 - **Packaging** (`headless/package.sh`): assembles a windowless, ad-hoc-signed `meetily-rec.app`
   with mic/screen-recording usage strings + a bundled, PATH-independent ffmpeg.
 - **`headless/build.sh`**: reproducible build (recreates gitignored stubs → cargo → package).
-- **Manual ad-hoc trigger** (`headless/meet-now.sh` / `meet-stop.sh`, installed to `~/.local/bin`):
-  `meet-now [name]` records a surprise huddle via the bundle (reuses TCC grants), auto-stops on
-  silence; `meet-stop` stops early. `install.sh` installs both.
+- **Manual control command** (`headless/meetily.sh` → `~/.local/bin/meetily`): `meetily start [name]`
+  records a surprise huddle via the bundle (reuses TCC grants), auto-stops on silence;
+  `meetily stop [--wait]` stops early; `meetily status` shows state + recent meetings. Respects the
+  single-recorder lock. (Renamed from the earlier `meet-now`/`meet-stop`.)
+- **Lock hardening** (`poller.sh`): global single-recorder lock (no two recorders at once for
+  overlapping/double-booked meetings) + a per-occurrence `.done` marker written on successful
+  completion (so a meeting that silence-stops mid-window is NOT re-armed on the next poll).
 - **`MEETILY_DRY_RUN`** mode in `poller.sh` (validate arming without recording / debugging).
 - **`/today` integration** (in the personal `today` skill, not this repo): surfaces recorded
   transcripts (transcript without `summary.md` = pending) + `/today meeting <slug|latest>` to

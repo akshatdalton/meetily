@@ -61,7 +61,10 @@ gcalcli --nocolor agenda "$(date +%Y-%m-%d) 00:00" "$(date +%Y-%m-%d) 23:59" --t
 
 ## Behavior notes
 
-- Dedup: one recorder per `(start,title)` via a pidfile in `~/.local/state/meetily-rec/`.
+- Locks (in `~/.local/state/meetily-rec/`): a **global single-recorder lock** (never two recorders at
+  once — `meetily start` and the poller both respect it) + a **per-occurrence `rec_<key>.done`** marker
+  written on successful completion, so a meeting that silence-stops mid-window is not re-armed. Stale
+  markers (>2 days) are auto-pruned.
 - Recording runs for the event's remaining duration (`--max-seconds`); ends on time
   even if the meeting overruns. Early-end leaves a slightly long recording (harmless).
 - All-day events are skipped.

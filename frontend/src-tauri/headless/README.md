@@ -95,13 +95,14 @@ cap as a safety net. Tune via `MEETILY_SILENCE` / `MEETILY_OVERRUN` (see `calend
 
 For a surprise huddle not on your calendar:
 ```bash
-meet-now [name]     # start: records mic+system via the bundle → vault; auto-stops on silence
-meet-stop           # stop early (SIGINT → finalize + transcribe)
+meetily start [name]   # records mic+system via the bundle → vault; auto-stops on silence
+meetily stop [--wait]  # stop early (SIGINT → finalize + transcribe; --wait blocks until written)
+meetily status         # is it recording? + calendar-agent state + recent meetings
 ```
-Installed to `~/.local/bin` by `calendar/install.sh` (source: `meet-now.sh` / `meet-stop.sh`).
-Launches via the `.app` bundle so it reuses the bundle's TCC grants (a bare shell run would attribute
-TCC to your terminal). Transcript lands in `~/opensource/vault/raw/meetings/<date>-<slug>/`, same as a
-calendar meeting.
+Installed to `~/.local/bin/meetily` by `calendar/install.sh` (source: `meetily.sh`). Launches via the
+`.app` bundle so it reuses the bundle's TCC grants (a bare shell run would attribute TCC to your
+terminal). Respects the same **single-recorder lock** as the poller (only one recording at a time).
+Transcript lands in `~/opensource/vault/raw/meetings/<date>-<slug>/`, same as a calendar meeting.
 
 ## Summaries via `/today`
 

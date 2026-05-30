@@ -24,6 +24,14 @@ OVERRUN="${MEETILY_OVERRUN:-7200}"  # hard cap = scheduled-remaining + this, so 
 mkdir -p "$STATE_DIR"
 now=$(date +%s)
 
+# Clean stale per-meeting markers (>2 days old) so they don't accumulate.
+find "$STATE_DIR" -maxdepth 1 \( -name 'rec_*.done' -o -name 'rec_*.pid' \) -mtime +2 -delete 2>/dev/null || true
+
+# GLOBAL single-recorder lock: never run two recorders at once (overlapping / double-booked
+# meetings, or a manual `meetily start` already in progress). If anything is recording, skip
+# all arming this cycle — record the active one, pick up the other when this one ends.
+busy=0; pgrep -f 'meetily-rec record' >/dev/null 2>&1 && busy=1
+
 [ -x "$REC_BIN" ] || { echo "$(date -Iseconds) ERROR recorder not found: $REC_BIN" >>"$STATE_DIR/poller.log"; exit 1; }
 [ -x "$CAL_CMD" ] || command -v "$CAL_CMD" >/dev/null 2>&1 || { echo "$(date -Iseconds) ERROR cal source not found: $CAL_CMD" >>"$STATE_DIR/poller.log"; exit 1; }
 
@@ -37,11 +45,13 @@ now=$(date +%s)
     remain=$((end - now))
     [ "$remain" -lt "$MIN_REMAIN" ] && continue
 
+    [ "$busy" = 1 ] && continue   # global lock: a recording is already in progress → one at a time
+
     key=$(printf '%s_%s' "$start" "$title" | shasum | cut -c1-12)
-    lock="$STATE_DIR/rec_${key}.pid"
-    if [ -f "$lock" ] && kill -0 "$(cat "$lock" 2>/dev/null)" 2>/dev/null; then
-      continue   # already recording this meeting
-    fi
+    # Per-occurrence lock: each meeting occurrence is recorded ONCE. The .done marker is
+    # written only on successful completion (below), so a meeting that silence-stops
+    # mid-window is NOT re-armed on the next poll.
+    [ -f "$STATE_DIR/rec_${key}.done" ] && continue
 
     date_slug=$(date -r "$start" +%Y-%m-%d)
     slug=$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-*//;s/-*$//')
@@ -56,9 +66,13 @@ now=$(date +%s)
       echo "$(date -Iseconds) DRY-RUN '$title' (sched ${remain}s, cap ${cap}s) → $out" >>"$STATE_DIR/poller.log"
       continue
     fi
-    "$REC_BIN" record --name "$title" --max-seconds "$cap" --stop-after-silence "$SILENCE" --out "$out" \
-      >"$STATE_DIR/rec_${key}.log" 2>&1 &
-    echo $! >"$lock"
+    # Spawn the recorder; on SUCCESSFUL completion (transcript written) drop a .done marker
+    # so this occurrence is never re-armed. A failure leaves no marker → retried next poll.
+    ( "$REC_BIN" record --name "$title" --max-seconds "$cap" --stop-after-silence "$SILENCE" --out "$out" \
+        >"$STATE_DIR/rec_${key}.log" 2>&1 \
+      && [ -f "$out/transcript.md" ] && touch "$STATE_DIR/rec_${key}.done" ) &
+    echo $! >"$STATE_DIR/rec_${key}.pid"
+    busy=1   # don't arm a second meeting in this same poll cycle
     echo "$(date -Iseconds) armed '$title' (sched ${remain}s, cap ${cap}s, stop-on-silence ${SILENCE}s) → $out (pid $!)" >>"$STATE_DIR/poller.log"
   fi
 done
